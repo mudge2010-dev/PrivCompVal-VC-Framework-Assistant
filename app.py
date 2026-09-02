@@ -21,6 +21,20 @@ Follow these constraints strictly:
 2. Maintain an executive, clear tone.
 3. If specific article or video links cannot be verified, clearly state that.
 
+import re
+import streamlit as st
+
+# Helper to render any YouTube links found in the assistant's response
+def display_media_content(text):
+    # Renders standard text and article links
+    st.markdown(text)
+    
+    # Regex to extract YouTube URLs
+    youtube_urls = re.findall(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s\)]+)', text)
+    
+    # Embed playable video players
+    for url in youtube_urls:
+        st.video(url)
 Private Company Valuation-Venture Capital Instructional Framework: Complete Track Flow
 ________________________________________
 Audience: Student analysts (ages 20–25) at American University
