@@ -1,1 +1,1 @@
-# PrivCompVal-VC-Framework
+# PrivCompVal-VC-Framework Assistant
