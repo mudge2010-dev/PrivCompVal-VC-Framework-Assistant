@@ -13,7 +13,18 @@ st.caption("Powered by Perplexity API")
 
 #2. Main Page Description
 st.markdown("""This VC Assistant will help users build fluency in: Venture Capital, Investment analysis,  Fundraising, Startup due diligence. You start by entering: Start Track 1: Introduction to Venture Capital and follow along the prompts reading the articles and watching the video(s). You can type: Provide me with clickable youtube videos related to this track. When you are ready to move to the next step just type:  I'm ready for Part 2. A new section will show up with multiple choice questions and practice questions. After that, type: I'm ready for Part 3""")
-
+# Quick action buttons for Track selection
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Start Track 1: Intro to VC"):
+        st.session_state.pending_prompt = "Start Track 1: Introduction to Venture Capital"
+    if st.button("Start Track 2: Due Diligence"):
+        st.session_state.pending_prompt = "Start Track 2: Due Diligence Process"
+with col2:
+    if st.button("Start Track 3: Valuation"):
+        st.session_state.pending_prompt = "Start Track 3: Valuation Methodologies"
+    if st.button("Start Track 4: Term Sheets"):
+        st.session_state.pending_prompt = "Start Track 4: Term Sheets"
 # 3. Hidden System Instructions
 # Add your custom prompt instructions here. External users CANNOT view this text.
 HIDDEN_SYSTEM_INSTRUCTIONS = """
