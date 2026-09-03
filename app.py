@@ -169,7 +169,10 @@ with st.sidebar:
         help="Find or generate your API key at perplexity.ai/settings/api"
     )
     st.markdown("[Get a Perplexity API Key](https://www.perplexity.ai/settings/api)")
-
+    st.divider()
+    if st.button("Clear Conversation"):
+        st.session_state.messages = [{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}]
+        st.rerun()
 # Block execution if the user hasn't provided a key
 if not user_api_key:
     st.info("👈 Please enter your Perplexity API key in the sidebar to start chatting.")
