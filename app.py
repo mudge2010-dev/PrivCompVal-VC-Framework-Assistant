@@ -168,21 +168,34 @@ def display_media_content(text):
         st.video(url)
 
 
-def append_live_sources(response_text, citations):
-    """Append Perplexity citation URLs as clickable Markdown sources."""
-    clean_urls = []
+def append_live_sources(response_text, citations, search_results):
+    """Add named, clickable Perplexity sources without discarding videos."""
+    sources = []
+
+    # Perplexity normally returns titles and URLs in search_results.
+    for result in search_results or []:
+        if isinstance(result, dict):
+            title = result.get("title") or result.get("name") or "Open source"
+            url = result.get("url")
+        else:
+            title = getattr(result, "title", None) or "Open source"
+            url = getattr(result, "url", None)
+        if url and url.startswith(("http://", "https://")):
+            sources.append((title, url))
+
+    # Keep citation URLs even when Perplexity does not supply source metadata.
+    known_urls = {url for _, url in sources}
     for citation in citations or []:
         url = citation if isinstance(citation, str) else getattr(citation, "url", None)
-        if url and url.startswith(("http://", "https://")) and url not in clean_urls:
-            clean_urls.append(url)
+        if url and url.startswith(("http://", "https://")) and url not in known_urls:
+            sources.append(("Open source", url))
+            known_urls.add(url)
 
-    if not clean_urls:
+    if not sources:
         return response_text
 
-    source_links = []
-    for number, url in enumerate(clean_urls, start=1):
-        source_links.append(f"{number}. [Open source]({url})")
-    return response_text + "\n\n### Live sources\n\n" + "\n".join(source_links)
+    links = [f"{number}. [{title}]({url})" for number, (title, url) in enumerate(sources, 1)]
+    return response_text + "\n\n### Live sources\n\n" + "\n".join(links)
 
 
 st.title("Custom Private Company and Venture Capital Research Assistant")
@@ -247,22 +260,42 @@ if prompt := st.chat_input("Ask a question..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Request the response and preserve Perplexity's live source URLs.
+    # Stream the response exactly as in the original application, while retaining
+    # the metadata needed for named live citations and video embedding.
     with st.chat_message("assistant"):
         try:
             # Keep the system prompt plus only the most recent conversation turns.
             MAX_HISTORY = 6
             messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[1:][-MAX_HISTORY:]
-            response = client.chat.completions.create(
+            stream = client.chat.completions.create(
                 model="sonar",  # Perplexity real-time web model
                 messages=messages_to_send,
-                stream=False
+                stream=True
             )
-            response_text = response.choices[0].message.content or ""
-            citations = getattr(response, "citations", None)
-            if not citations and getattr(response, "model_extra", None):
-                citations = response.model_extra.get("citations", [])
-            response_text = append_live_sources(response_text, citations)
+
+            response_text = ""
+            citations = []
+            search_results = []
+            live_output = st.empty()
+
+            for chunk in stream:
+                if chunk.choices:
+                    content = chunk.choices[0].delta.content or ""
+                    response_text += content
+                    live_output.markdown(response_text + "▌")
+
+                extra = getattr(chunk, "model_extra", None) or {}
+                chunk_citations = getattr(chunk, "citations", None) or extra.get("citations")
+                chunk_results = getattr(chunk, "search_results", None) or extra.get("search_results")
+                if chunk_citations:
+                    citations = chunk_citations
+                if chunk_results:
+                    search_results = chunk_results
+
+            live_output.empty()
+            response_text = append_live_sources(
+                response_text, citations, search_results
+            )
             display_media_content(response_text)
             
             # Save assistant response to session history
