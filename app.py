@@ -94,36 +94,7 @@ Track 7: Communications & Networking
 """
 
 # ==========================================
-# 3. SIDEBAR AUTHENTICATION & UTILITIES
-# ==========================================
-with st.sidebar:
-    st.header("Authentication")
-    st.write("To use this assistant, enter your Perplexity API key below.")
-    user_api_key = st.text_input(
-        "Perplexity API Key:",
-        type="password",
-        help="Find or generate your API key at perplexity.ai/settings/api"
-    )
-    st.markdown("[Get a Perplexity API Key](https://www.perplexity.ai/settings/api)")
-    
-    st.divider()
-    if st.button("Clear Conversation"):
-        st.session_state.messages = [{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}]
-        st.rerun()
-
-# Block execution if user has not provided an API key
-if not user_api_key:
-    st.info("👈 Please enter your Perplexity API key in the sidebar to start chatting.")
-    st.stop()
-
-# Initialize OpenAI client pointing to Perplexity endpoint
-client = openai.OpenAI(
-    api_key=user_api_key,
-    base_url="https://api.perplexity.ai"
-)
-
-# ==========================================
-# 4. MAIN INTERFACE & DESCRIPTION
+# 3. MAIN INTERFACE & DESCRIPTION (Rendered First)
 # ==========================================
 st.title("Custom Private Company and Venture Capital Research Assistant")
 st.caption("Powered by Perplexity API")
@@ -152,6 +123,35 @@ with col2:
         st.session_state.pending_prompt = "Start Track 4: Term Sheets"
 
 st.divider()
+
+# ==========================================
+# 4. SIDEBAR AUTHENTICATION & UTILITIES
+# ==========================================
+with st.sidebar:
+    st.header("Authentication")
+    st.write("To use this assistant, enter your Perplexity API key below.")
+    user_api_key = st.text_input(
+        "Perplexity API Key:",
+        type="password",
+        help="Find or generate your API key at perplexity.ai/settings/api"
+    )
+    st.markdown("[Get a Perplexity API Key](https://www.perplexity.ai/settings/api)")
+    
+    st.divider()
+    if st.button("Clear Conversation"):
+        st.session_state.messages = [{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}]
+        st.rerun()
+
+# Block chat submission if user has not provided an API key
+if not user_api_key:
+    st.info("👈 Please enter your Perplexity API key in the sidebar to start chatting.")
+    st.stop()
+
+# Initialize OpenAI client pointing to Perplexity endpoint
+client = openai.OpenAI(
+    api_key=user_api_key,
+    base_url="https://api.perplexity.ai"
+)
 
 # ==========================================
 # 5. INITIALIZE CHAT HISTORY
