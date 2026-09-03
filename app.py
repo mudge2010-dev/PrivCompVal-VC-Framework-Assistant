@@ -16,6 +16,9 @@ Follow these constraints strictly:
 1. Whenever recommending resources, ALWAYS include direct clickable Markdown URLs to relevant web articles and YouTube videos (e.g., [Article Title](https://example.com) or [Video Title](https://youtube.com/watch?v=...)).
 2. Maintain an executive, clear tone.
 3. If specific article or video links cannot be verified, clearly state that.
+4. Never provide only an article or video title. Put the complete live URL in the
+   Markdown link itself. For videos, prefer a direct YouTube watch URL rather than
+   a channel home page or a search-results page.
 
 Private Company Valuation-Venture Capital Instructional Framework: Complete Track Flow
 ________________________________________
@@ -165,6 +168,23 @@ def display_media_content(text):
         st.video(url)
 
 
+def append_live_sources(response_text, citations):
+    """Append Perplexity citation URLs as clickable Markdown sources."""
+    clean_urls = []
+    for citation in citations or []:
+        url = citation if isinstance(citation, str) else getattr(citation, "url", None)
+        if url and url.startswith(("http://", "https://")) and url not in clean_urls:
+            clean_urls.append(url)
+
+    if not clean_urls:
+        return response_text
+
+    source_links = []
+    for number, url in enumerate(clean_urls, start=1):
+        source_links.append(f"{number}. [Open source]({url})")
+    return response_text + "\n\n### Live sources\n\n" + "\n".join(source_links)
+
+
 st.title("Custom Private Company and Venture Capital Research Assistant")
 st.caption("Powered by Perplexity API")
 
@@ -213,7 +233,10 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            if message["role"] == "assistant":
+                display_media_content(message["content"])
+            else:
+                st.markdown(message["content"])
 
 # 7. Handle User Chat Input
 if prompt := st.chat_input("Ask a question..."):
@@ -224,18 +247,23 @@ if prompt := st.chat_input("Ask a question..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Stream assistant response from Perplexity API
+    # Request the response and preserve Perplexity's live source URLs.
     with st.chat_message("assistant"):
         try:
             # Keep the system prompt plus only the most recent conversation turns.
             MAX_HISTORY = 6
             messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[1:][-MAX_HISTORY:]
-            stream = client.chat.completions.create(
+            response = client.chat.completions.create(
                 model="sonar",  # Perplexity real-time web model
                 messages=messages_to_send,
-                stream=True
+                stream=False
             )
-            response_text = st.write_stream(stream)
+            response_text = response.choices[0].message.content or ""
+            citations = getattr(response, "citations", None)
+            if not citations and getattr(response, "model_extra", None):
+                citations = response.model_extra.get("citations", [])
+            response_text = append_live_sources(response_text, citations)
+            display_media_content(response_text)
             
             # Save assistant response to session history
             st.session_state.messages.append({"role": "assistant", "content": response_text})
