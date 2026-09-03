@@ -7,7 +7,13 @@ st.set_page_config(
     page_icon="🤖", 
     layout="centered"
 )
-# Send only system instructions + the last 6 messages to save API input tokens
+# 1. Initialize chat history if it doesn't exist yet
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}
+    ]
+
+# 2. Limit history length to save API tokens
 MAX_HISTORY = 6
 messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[-MAX_HISTORY:]
 
