@@ -219,3 +219,13 @@ if prompt := st.chat_input("Ask a question..."):
             st.session_state.messages.append({"role": "assistant", "content": response_text})
         except Exception as e:
             st.error(f"API Error: Please check your API key and balance. Details: {e}")
+      
+# Send only system instructions + the last 6 messages to save API input tokens
+MAX_HISTORY = 6
+messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[-MAX_HISTORY:]
+
+stream = client.chat.completions.create(
+    model="sonar",
+    messages=messages_to_send,
+    stream=True
+)
