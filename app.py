@@ -166,10 +166,22 @@ if "messages" not in st.session_state:
     ]
 
 def display_media_content(text):
+    # Render text response
     st.markdown(text)
-    youtube_urls = re.findall(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s\)]+)', text)
-    for url in youtube_urls:
-        st.video(url)
+    
+    # Robust YouTube regex matching video IDs across multiple URL formats
+    youtube_pattern = r'(?:https?://)?(?:www\.)?(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([\w-]+)'
+    matches = re.findall(youtube_pattern, text)
+    
+    seen = set()
+    for video_id in matches:
+        if video_id not in seen:
+            seen.add(video_id)
+            clean_url = f"https://www.youtube.com/watch?v={video_id}"
+            try:
+                st.video(clean_url)
+            except Exception:
+                pass
 
 # Render previous chat messages
 for message in st.session_state.messages:
