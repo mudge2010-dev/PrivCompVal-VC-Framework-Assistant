@@ -7,9 +7,21 @@ st.set_page_config(
     page_icon="🤖", 
     layout="centered"
 )
+# Send only system instructions + the last 6 messages to save API input tokens
+MAX_HISTORY = 6
+messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[-MAX_HISTORY:]
 
+stream = client.chat.completions.create(
+    model="sonar",
+    messages=messages_to_send,
+    stream=True
+)
 st.title("Custom Private Company and Venture Capital Research Assistant")
 st.caption("Powered by Perplexity API")
+
+if st.sidebar.button("Clear Conversation"):
+    st.session_state.messages = [{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}]
+    st.rerun()
 #3. Main Page Description 
 st.markdown("""This VC Assistant will help users build fluency in: Venture Capital, Investment analysis,  Fundraising, Startup due diligence. You start by entering: Start Track 1: Introduction to Venture Capital and follow along the prompts reading the articles and watching the video(s). When you are ready to move to the next step just type:  I'm ready for Part 2. A new section will show up with multiple choice questions and practice questions. After that, type: I'm ready for Part 3""")
 # 2. Hidden System Instructions
