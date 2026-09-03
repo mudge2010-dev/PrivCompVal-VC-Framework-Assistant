@@ -244,27 +244,3 @@ with st.chat_message("assistant"):
     except Exception as e:
         st.error(f"API Error: Please check your API key and balance. Details: {e}")
 
-#1. Initialize chat history if it doesn't exist yet
-
-if "messages" not in st.session_state:
-st.session_state.messages = [
-{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}
-]
-
-2. Limit history length to save API tokens
-
-MAX_HISTORY = 6
-messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[-MAX_HISTORY:]
-
-stream = client.chat.completions.create(
-model="sonar",
-messages=messages_to_send,
-stream=True
-)
-st.title("Custom Private Company and Venture Capital Research Assistant")
-st.caption("Powered by Perplexity API")
-
-if st.sidebar.button("Clear Conversation"):
-st.session_state.messages = [{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}]
-st.rerun()
-
