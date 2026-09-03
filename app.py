@@ -1,30 +1,75 @@
 import streamlit as st
 import openai
-import re
 
-# 1. Page Configuration
+1. Page Configuration
+
 st.set_page_config(
-    page_title="Custom Private Company and Venture Capital Research Assistant", 
-    page_icon="🤖", 
-    layout="centered"
+page_title="Custom Private Company and Venture Capital Research Assistant",
+page_icon="🤖",
+layout="centered"
 )
-# 2. Hidden System Instructions
-# Add your custom prompt instructions here. External users CANNOT view this text.
+
+1. Initialize chat history if it doesn't exist yet
+
+if "messages" not in st.session_state:
+st.session_state.messages = [
+{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}
+]
+
+2. Limit history length to save API tokens
+
+MAX_HISTORY = 6
+messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[-MAX_HISTORY:]
+
+stream = client.chat.completions.create(
+model="sonar",
+messages=messages_to_send,
+stream=True
+)
+st.title("Custom Private Company and Venture Capital Research Assistant")
+st.caption("Powered by Perplexity API")
+
+if st.sidebar.button("Clear Conversation"):
+st.session_state.messages = [{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}]
+st.rerun()
+#3. Main Page Description
+st.markdown("""This VC Assistant will help users build fluency in: Venture Capital, Investment analysis,  Fundraising, Startup due diligence. You start by entering: Start Track 1: Introduction to Venture Capital and follow along the prompts reading the articles and watching the video(s). When you are ready to move to the next step just type:  I'm ready for Part 2. A new section will show up with multiple choice questions and practice questions. After that, type: I'm ready for Part 3""")
+
+2. Hidden System Instructions
+
+Add your custom prompt instructions here. External users CANNOT view this text.
+
 HIDDEN_SYSTEM_INSTRUCTIONS = """
 You are a specialized research assistant.
 Follow these constraints strictly:
-1. Whenever recommending resources, ALWAYS include direct clickable Markdown URLs to relevant web articles and YouTube videos (e.g., [Article Title](https://example.com) or [Video Title](https://youtube.com/watch?v=...)).
-2. Maintain an executive, clear tone.
-3. If specific article or video links cannot be verified, clearly state that.
-4. Never provide only an article or video title. Put the complete live URL in the
-   Markdown link itself. For videos, prefer a direct YouTube watch URL rather than
-   a channel home page or a search-results page.
+
+Whenever recommending resources, ALWAYS include direct clickable Markdown URLs to relevant web articles and YouTube videos (e.g., Article Title or Video Title).
+
+Maintain an executive, clear tone.
+
+If specific article or video links cannot be verified, clearly state that.
+
+import re
+import streamlit as st
+
+Helper to render any YouTube links found in the assistant's response
+
+def display_media_content(text):
+# Renders standard text and article links
+st.markdown(text)
+
+# Regex to extract YouTube URLs
+youtube_urls = re.findall(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s\)]+)', text)
+
+# Embed playable video players
+for url in youtube_urls:
+    st.video(url)
 
 Private Company Valuation-Venture Capital Instructional Framework: Complete Track Flow
-________________________________________
+
 Audience: Student analysts (ages 20–25) at American University
-                                                                                                                     Purpose: Structured onboarding and education in venture capital, emphasizing early-stage investing.                                                                                                                           Educational Structure:
-                                                                                                                                Seven educational tracks, each with three parts:
+Purpose: Structured onboarding and education in venture capital, emphasizing early-stage investing.                                                                                                                           Educational Structure:
+Seven educational tracks, each with three parts:
 
 Brief Articles and Videos
 
@@ -54,11 +99,11 @@ SAFEs, convertible notes, equity terms.
 
 Equity structure, dilution, ownership post-financing.
 
-6. Venture Capital Fund Internal Practices
+Venture Capital Fund Internal Practices
 
 Roles, deal flow, investment process at EVSF.
 
-7. Communications, Business Etiquette, Networking
+Communications, Business Etiquette, Networking
 
 Professional conduct, investor communication, networking tips.
 ________________________________________                                            ROLE & TONE
@@ -99,13 +144,14 @@ o	Highlight risks, next steps
 o	Request Word template
 o	Ask the user to ask for an MS Word template where to put their full name and email in the template. Instruct the user to complete the following for the Business Memo Assignment from the content learned in this conversation:
 -A 1 page business memo (you must inform the student to use a well-structured memo with clear headings and subheadings) summarizing their most important takeaway, 3-4 key lessons learned, and next steps for their learning journey in the Class Title, {TRACK_NUMBER}  to become an expert (in the student’s own words – with critical thinking NOT your words).
-- In the Appendix, include the Practice Question Assignment questions and their responses to each one. 
-Inform the students that any work that is not theirs must be cited with an in-text citation with a hyperlink. You can offer to critique and review their business memo before final submission. Finally, tell students to Copy and Paste the questions and highlight the correct answer and answer the short answer questions  using a professional tone. After that, save it under your Last Name-First Name-Track {Number}-Answers.doc. Inform students that they should write a Business Memo for each Track and that they need to  compile the first 4 business memos into one document saved under Last Name-First Name-Tracks {Number: 1-2-3-4}-Answers.doc and submit it in Canvas under Assignments. 
+
+In the Appendix, include the Practice Question Assignment questions and their responses to each one.
+Inform the students that any work that is not theirs must be cited with an in-text citation with a hyperlink. You can offer to critique and review their business memo before final submission. Finally, tell students to Copy and Paste the questions and highlight the correct answer and answer the short answer questions  using a professional tone. After that, save it under your Last Name-First Name-Track {Number}-Answers.doc. Inform students that they should write a Business Memo for each Track and that they need to  compile the first 4 business memos into one document saved under Last Name-First Name-Tracks {Number: 1-2-3-4}-Answers.doc and submit it in Canvas under Assignments.
 ✅ Step 8: Optional Final Actions
 •	Ask if they want the answer key
 •	Offer to rerun track with new materials
 •	Suggest next track in sequence
-________________________________________
+
 🧹 SECTION-SPECIFIC CONTENT REQUIREMENTS
 Track 1: Introduction to Venture Capital
 •	Fund structure, LP/GP roles
@@ -139,7 +185,7 @@ Track 7: Communications & Networking
 •	Cold outreach/follow-up
 •	Investor conversation prep
 •	Event professionalism
-________________________________________
+
 🔹 HOW TO EXPAND OR MODIFY
 Add 1-2 More Articles/Videos (Part 1)
 •	Add 2 optional advanced links
@@ -157,148 +203,66 @@ o	Analyst-level: foundational
 o	Partner-level: strategic decision-making
 """
 
-# Helper to render Markdown and embed any YouTube links in a completed response.
-def display_media_content(text):
-    st.markdown(text)
-    youtube_urls = re.findall(
-        r"https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s)]+",
-        text,
-    )
-    for url in youtube_urls:
-        st.video(url)
+3. Sidebar Authentication (User enters their API key)
 
-
-def append_live_sources(response_text, citations, search_results):
-    """Add named, clickable Perplexity sources without discarding videos."""
-    sources = []
-
-    # Perplexity normally returns titles and URLs in search_results.
-    for result in search_results or []:
-        if isinstance(result, dict):
-            title = result.get("title") or result.get("name") or "Open source"
-            url = result.get("url")
-        else:
-            title = getattr(result, "title", None) or "Open source"
-            url = getattr(result, "url", None)
-        if url and url.startswith(("http://", "https://")):
-            sources.append((title, url))
-
-    # Keep citation URLs even when Perplexity does not supply source metadata.
-    known_urls = {url for _, url in sources}
-    for citation in citations or []:
-        url = citation if isinstance(citation, str) else getattr(citation, "url", None)
-        if url and url.startswith(("http://", "https://")) and url not in known_urls:
-            sources.append(("Open source", url))
-            known_urls.add(url)
-
-    if not sources:
-        return response_text
-
-    links = [f"{number}. [{title}]({url})" for number, (title, url) in enumerate(sources, 1)]
-    return response_text + "\n\n### Live sources\n\n" + "\n".join(links)
-
-
-st.title("Custom Private Company and Venture Capital Research Assistant")
-st.caption("Powered by Perplexity API")
-
-if st.sidebar.button("Clear Conversation"):
-    st.session_state.messages = [
-        {"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}
-    ]
-    st.rerun()
-
-st.markdown(
-    """This VC Assistant will help users build fluency in venture capital, investment
-analysis, fundraising, and startup due diligence. Start by entering **Start Track 1:
-Introduction to Venture Capital**. When ready, type **I'm ready for Part 2**, and
-later **I'm ready for Part 3**."""
-)
-
-# 3. Sidebar Authentication (User enters their API key)
 with st.sidebar:
-    st.header("Authentication")
-    st.write("To use this assistant, enter your Perplexity API key below.")
-    user_api_key = st.text_input(
-        "Perplexity API Key:",
-        type="password",
-        help="Find or generate your API key at perplexity.ai/settings/api"
-    )
-    st.markdown("[Get a Perplexity API Key](https://www.perplexity.ai/settings/api)")
+st.header("Authentication")
+st.write("To use this assistant, enter your Perplexity API key below.")
+user_api_key = st.text_input(
+"Perplexity API Key:",
+type="password",
+help="Find or generate your API key at perplexity.ai/settings/api"
+)
+st.markdown("Get a Perplexity API Key")
 
-# Block execution if the user hasn't provided a key
+Block execution if the user hasn't provided a key
+
 if not user_api_key:
-    st.info("👈 Please enter your Perplexity API key in the sidebar to start chatting.")
-    st.stop()
+st.info("👈 Please enter your Perplexity API key in the sidebar to start chatting.")
+st.stop()
 
-# 4. Initialize Perplexity Client using the User's API Key
+4. Initialize Perplexity Client using the User's API Key
+
 client = openai.OpenAI(
-    api_key=user_api_key,
-    base_url="https://api.perplexity.ai"
+api_key=user_api_key,
+base_url="https://api.perplexity.ai"
 )
 
-# 5. Initialize Conversation History
+5. Initialize Conversation History
+
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}
-    ]
+st.session_state.messages = [
+{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}
+]
 
-# 6. Render Previous Chat Messages (Skip system prompt)
+6. Render Previous Chat Messages (Skip system prompt)
+
 for message in st.session_state.messages:
-    if message["role"] != "system":
-        with st.chat_message(message["role"]):
-            if message["role"] == "assistant":
-                display_media_content(message["content"])
-            else:
-                st.markdown(message["content"])
+if message["role"] != "system":
+with st.chat_message(message["role"]):
+st.markdown(message["content"])
 
-# 7. Handle User Chat Input
+7. Handle User Chat Input
+
 if prompt := st.chat_input("Ask a question..."):
-    # Append user input to session history
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    # Render user prompt in UI
-    with st.chat_message("user"):
-        st.markdown(prompt)
+# Append user input to session history
+st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Stream the response exactly as in the original application, while retaining
-    # the metadata needed for named live citations and video embedding.
-    with st.chat_message("assistant"):
-        try:
-            # Keep the system prompt plus only the most recent conversation turns.
-            MAX_HISTORY = 6
-            messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[1:][-MAX_HISTORY:]
-            stream = client.chat.completions.create(
-                model="sonar",  # Perplexity real-time web model
-                messages=messages_to_send,
-                stream=True
-            )
+# Render user prompt in UI
+with st.chat_message("user"):
+    st.markdown(prompt)
 
-            response_text = ""
-            citations = []
-            search_results = []
-            live_output = st.empty()
-
-            for chunk in stream:
-                if chunk.choices:
-                    content = chunk.choices[0].delta.content or ""
-                    response_text += content
-                    live_output.markdown(response_text + "▌")
-
-                extra = getattr(chunk, "model_extra", None) or {}
-                chunk_citations = getattr(chunk, "citations", None) or extra.get("citations")
-                chunk_results = getattr(chunk, "search_results", None) or extra.get("search_results")
-                if chunk_citations:
-                    citations = chunk_citations
-                if chunk_results:
-                    search_results = chunk_results
-
-            live_output.empty()
-            response_text = append_live_sources(
-                response_text, citations, search_results
-            )
-            display_media_content(response_text)
-            
-            # Save assistant response to session history
-            st.session_state.messages.append({"role": "assistant", "content": response_text})
-        except Exception as e:
-            st.error(f"API Error: Please check your API key and balance. Details: {e}")
+# Stream assistant response from Perplexity API
+with st.chat_message("assistant"):
+    try:
+        stream = client.chat.completions.create(
+            model="sonar",  # Perplexity real-time web model
+            messages=st.session_state.messages,
+            stream=True
+        )
+        response_text = st.write_stream(stream)
+        
+        # Save assistant response to session history
+        st.session_state.messages.append({"role": "assistant", "content": response_text})
+    except Exception as e:
+        st.error(f"API Error: Please check your API key and balance. Details: {e}")
