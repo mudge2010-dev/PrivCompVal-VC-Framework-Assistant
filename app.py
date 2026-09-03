@@ -12,7 +12,7 @@ st.title("Private Company Valuation and Venture Capital Research Assistant")
 st.caption("Powered by Perplexity API")
 
 #2. Main Page Description
-st.markdown("""This VC Assistant will help users build fluency in: Venture Capital, Investment analysis,  Fundraising, Startup due diligence. You start by entering: Start Track 1: Introduction to Venture Capital and follow along the prompts reading the articles and watching the video(s). When you are ready to move to the next step just type:  I'm ready for Part 2. A new section will show up with multiple choice questions and practice questions. After that, type: I'm ready for Part 3""")
+st.markdown("""This VC Assistant will help users build fluency in: Venture Capital, Investment analysis,  Fundraising, Startup due diligence. You start by entering: Start Track 1: Introduction to Venture Capital and follow along the prompts reading the articles and watching the video(s). You can type: Provide me with clickable youtube videos related to this track. When you are ready to move to the next step just type:  I'm ready for Part 2. A new section will show up with multiple choice questions and practice questions. After that, type: I'm ready for Part 3""")
 
 # 3. Hidden System Instructions
 # Add your custom prompt instructions here. External users CANNOT view this text.
