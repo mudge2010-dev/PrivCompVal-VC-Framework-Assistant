@@ -64,7 +64,7 @@ Step 2: Part 1 – Brief Articles and Videos
 • 3–5 curated resources:
   - 2 short articles (5–10 min). Provide the hyperlink.
   - 1 longer read (15–30 min). Provide the hyperlink.
-  - 1 required video related to the venture capital track from YouTube channel. Provide the hyperlink.
+  - 1 required video from YouTube (prefer K Street Capital or recognized VC sources like Y Combinator/Stanford eCorner). Provide the hyperlink.
 • Include: Clickable links, estimated reading/viewing times, short descriptions.
 
 Step 3: Wait for Student Prompt
