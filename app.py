@@ -68,7 +68,7 @@ Each of the 7 educational tracks follows this sequential flow:
 •	3–5 curated resources:
 o	2 short articles (5–10 min). Provide the hyperlink.
 o	1 longer read (15–30 min). Provide the hyperlink.
-o	1 required video from K Street Capital YouTube channel. Provide the hyperlink.
+o	1 required video on the venture capital topic for each track from the YouTube channel. Provide the hyperlink.
 •	Include:
 o	Clickable links
 o	Estimated reading/viewing times
