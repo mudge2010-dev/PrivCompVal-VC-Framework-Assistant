@@ -1,5 +1,6 @@
 import streamlit as st
 import openai
+import re
 
 # 1. Page Configuration
 st.set_page_config(
@@ -7,29 +8,6 @@ st.set_page_config(
     page_icon="🤖", 
     layout="centered"
 )
-# 1. Initialize chat history if it doesn't exist yet
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}
-    ]
-
-# 2. Limit history length to save API tokens
-MAX_HISTORY = 6
-messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[-MAX_HISTORY:]
-
-stream = client.chat.completions.create(
-    model="sonar",
-    messages=messages_to_send,
-    stream=True
-)
-st.title("Custom Private Company and Venture Capital Research Assistant")
-st.caption("Powered by Perplexity API")
-
-if st.sidebar.button("Clear Conversation"):
-    st.session_state.messages = [{"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}]
-    st.rerun()
-#3. Main Page Description 
-st.markdown("""This VC Assistant will help users build fluency in: Venture Capital, Investment analysis,  Fundraising, Startup due diligence. You start by entering: Start Track 1: Introduction to Venture Capital and follow along the prompts reading the articles and watching the video(s). When you are ready to move to the next step just type:  I'm ready for Part 2. A new section will show up with multiple choice questions and practice questions. After that, type: I'm ready for Part 3""")
 # 2. Hidden System Instructions
 # Add your custom prompt instructions here. External users CANNOT view this text.
 HIDDEN_SYSTEM_INSTRUCTIONS = """
@@ -39,20 +17,6 @@ Follow these constraints strictly:
 2. Maintain an executive, clear tone.
 3. If specific article or video links cannot be verified, clearly state that.
 
-import re
-import streamlit as st
-
-# Helper to render any YouTube links found in the assistant's response
-def display_media_content(text):
-    # Renders standard text and article links
-    st.markdown(text)
-    
-    # Regex to extract YouTube URLs
-    youtube_urls = re.findall(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s\)]+)', text)
-    
-    # Embed playable video players
-    for url in youtube_urls:
-        st.video(url)
 Private Company Valuation-Venture Capital Instructional Framework: Complete Track Flow
 ________________________________________
 Audience: Student analysts (ages 20–25) at American University
@@ -190,6 +154,33 @@ o	Analyst-level: foundational
 o	Partner-level: strategic decision-making
 """
 
+# Helper to render Markdown and embed any YouTube links in a completed response.
+def display_media_content(text):
+    st.markdown(text)
+    youtube_urls = re.findall(
+        r"https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s)]+",
+        text,
+    )
+    for url in youtube_urls:
+        st.video(url)
+
+
+st.title("Custom Private Company and Venture Capital Research Assistant")
+st.caption("Powered by Perplexity API")
+
+if st.sidebar.button("Clear Conversation"):
+    st.session_state.messages = [
+        {"role": "system", "content": HIDDEN_SYSTEM_INSTRUCTIONS}
+    ]
+    st.rerun()
+
+st.markdown(
+    """This VC Assistant will help users build fluency in venture capital, investment
+analysis, fundraising, and startup due diligence. Start by entering **Start Track 1:
+Introduction to Venture Capital**. When ready, type **I'm ready for Part 2**, and
+later **I'm ready for Part 3**."""
+)
+
 # 3. Sidebar Authentication (User enters their API key)
 with st.sidebar:
     st.header("Authentication")
@@ -236,9 +227,12 @@ if prompt := st.chat_input("Ask a question..."):
     # Stream assistant response from Perplexity API
     with st.chat_message("assistant"):
         try:
+            # Keep the system prompt plus only the most recent conversation turns.
+            MAX_HISTORY = 6
+            messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[1:][-MAX_HISTORY:]
             stream = client.chat.completions.create(
                 model="sonar",  # Perplexity real-time web model
-                messages=st.session_state.messages,
+                messages=messages_to_send,
                 stream=True
             )
             response_text = st.write_stream(stream)
