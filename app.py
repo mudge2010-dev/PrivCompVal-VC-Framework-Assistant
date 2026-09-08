@@ -196,36 +196,52 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# 7. Handle User Chat Input
-if prompt := st.chat_input("Ask a question..."):
-    # Append user input to session history
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    # Render user prompt in UI
-    with st.chat_message("user"):
-        st.markdown(prompt)
+# 7. HANDLE USER CHAT INPUT, FILE UPLOADS & STREAMING
+# ==========================================
+# st.chat_input accepts accept_file=True or accept_file="multiple"
+# It puts a "+" button directly inside the input bar.
+chat_response = st.chat_input(
+    "Ask a question or type your prompt...",
+    accept_file="multiple",
+    file_type=["png", "jpg", "jpeg", "pdf", "docx", "txt"]
+)
 
-    # Stream assistant response from Perplexity API
+# Handle button clicks from the main UI
+if "pending_prompt" in st.session_state and st.session_state.pending_prompt:
+    prompt_text = st.session_state.pending_prompt
+    uploaded_files = []
+    st.session_state.pending_prompt = None
+elif chat_response:
+    prompt_text = chat_response.text
+    uploaded_files = chat_response.files
+else:
+    prompt_text = None
+    uploaded_files = []
+
+if prompt_text or uploaded_files:
+    # Build display message for user
+    user_display = prompt_text if prompt_text else ""
+    if uploaded_files:
+        file_names = ", ".join([f.name for f in uploaded_files])
+        user_display += f"\n\n📎 *Uploaded files:* {file_names}"
+
+    st.session_state.messages.append({"role": "user", "content": user_display})
+
+    with st.chat_message("user"):
+        st.markdown(user_display)
+
     with st.chat_message("assistant"):
         try:
+            MAX_HISTORY = 6
+            messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[-MAX_HISTORY:]
+
             stream = client.chat.completions.create(
-                model="sonar",  # Perplexity real-time web model
-                messages=st.session_state.messages,
+                model="sonar",
+                messages=messages_to_send,
                 stream=True
             )
             response_text = st.write_stream(stream)
             
-            # Save assistant response to session history
             st.session_state.messages.append({"role": "assistant", "content": response_text})
         except Exception as e:
             st.error(f"API Error: Please check your API key and balance. Details: {e}")
-      
-# Send only system instructions + the last 6 messages to save API input tokens
-MAX_HISTORY = 6
-messages_to_send = [st.session_state.messages[0]] + st.session_state.messages[-MAX_HISTORY:]
-
-stream = client.chat.completions.create(
-    model="sonar",
-    messages=messages_to_send,
-    stream=True
-)
